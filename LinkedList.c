@@ -8,6 +8,7 @@ typedef struct Node {
 
 s * head = NULL;
 
+// LINKEDLIST PRINT
 void printLinkedList(s *head) {
     if(head == NULL) {
         printf("Empty LinkedList!");
@@ -20,6 +21,7 @@ void printLinkedList(s *head) {
     printf("NULL");
 }
 
+// INSERT ELEMENT AT THE FIRST OF THE LIST
 s * addFirst(int data) {
     s * newNode = (s*)malloc(sizeof(s));
     newNode->data = data;
@@ -34,6 +36,7 @@ s * addFirst(int data) {
     return head;
 }
 
+// INSERT ELEMENT AT THE LAST OF THE LIST
 s * addLast(int data) {
     s * newNode = (s*)malloc(sizeof(s));
     newNode->data = data;
@@ -51,6 +54,7 @@ s * addLast(int data) {
     return head;
 }
 
+// DELETE ELEMENT FROM THE FIRST OF THE LIST
 s * deleteFirst(s * head) {
     if(head == NULL) {
         return NULL;
@@ -60,6 +64,8 @@ s * deleteFirst(s * head) {
     return head;
 }
 
+
+// DELETE ELEMENT FROM THE LAST OF THE LIST
 s * deleteLast(s * head) {
     if(head == NULL) {
         return NULL;
@@ -79,6 +85,8 @@ s * deleteLast(s * head) {
     return head;
 }
 
+
+// ADD ELEMENT AFTER A NODE OF THE LIST
 s * addAtMiddle(s * head, int data) {
     if(head == NULL) {
         head = addFirst(data);
@@ -101,6 +109,7 @@ s * addAtMiddle(s * head, int data) {
     return head;
 }
 
+// REMOVE ELEMENT FROM MIDDLE IN THE LIST
 s * deleteAtMiddle(s * head, int data) {
     s * prev = head, * next;
     while(prev->next->data != data) {
