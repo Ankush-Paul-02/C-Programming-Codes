@@ -40,8 +40,8 @@ graph* createGraph(int vertices) {
     g->edge[4].weight = 4;
 
     g->edge[5].source = 4;  //? 4->1
-    g->edge[5].source = 1;
-    g->edge[5].source = -1;
+    g->edge[5].destination = 1;
+    g->edge[5].weight = -1;
 
     return g;
 }
