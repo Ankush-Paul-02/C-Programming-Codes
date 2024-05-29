@@ -1,0 +1,43 @@
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<arpa/inet.h>
+
+int main (int ac, char **av) {
+    struct sockaddr_in sad;
+    int sid, n, vowels;
+    char sip_addr[32], msg[32];
+
+    if (ac == 1)
+        strcpy (sip_addr, "127.0.0.1");
+    else
+        strcpy (sip_addr, av[1]);
+    
+    sid = socket (AF_INET, SOCK_STREAM, 0);
+    sad.sin_family = AF_INET;
+    sad.sin_addr.s_addr = inet_addr (sip_addr);
+    sad.sin_port = htons(1234);
+    connect (sid, (struct sockaddr *) &sad, sizeof (sad));
+    
+    while (1) {
+        printf ("Enter message to send: "); 
+        fgets (msg, sizeof(msg), stdin);
+        msg[strcspn(msg, "\n")] = 0; // remove newline character
+        
+        write (sid, (void *) msg, strlen (msg));
+        
+        if (!strcmp (msg, "EXIT"))
+            break;
+        
+        // Receive vowel count from server
+        n = read (sid, (void *) &vowels, sizeof (int));
+        printf ("Number of vowels received from server: %d\n", vowels);
+    }
+    
+    close (sid);
+    return 0;
+}

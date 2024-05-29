@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        fprintf(stderr,"Usage: %s <Server IP> <Number A> <Number B>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    int client_socket;
+    struct sockaddr_in server_addr;
+    int A, B, result;
+
+    // Create socket
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_socket < 0) {
+        perror("Error opening socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialize server address struct
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(argv[1]);
+    server_addr.sin_port = htons(12345);
+
+    // Connect to server
+    if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Error connecting to server");
+        exit(EXIT_FAILURE);
+    }
+
+    // Send numbers to server
+    A = atoi(argv[2]);
+    B = atoi(argv[3]);
+    send(client_socket, &A, sizeof(A), 0);
+    send(client_socket, &B, sizeof(B), 0);
+
+    // Receive result from server
+    recv(client_socket, &result, sizeof(result), 0);
+    printf("Result received from server: %d\n", result);
+
+    // Close socket
+    close(client_socket);
+
+    return 0;
+}

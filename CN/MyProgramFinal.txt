@@ -1,0 +1,108 @@
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/un.h>
+#include <unistd.h>
+
+int main(void)
+{
+    int client_sockfd;
+    int client_len;
+    char out_buf[100], in_buf[100];
+    struct sockaddr_un client_address;
+    
+    client_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    client_address.sun_family = AF_UNIX;
+    strcpy(client_address.sun_path, "server_socket");
+    client_len = sizeof(client_address);
+    
+    printf("\n\nClient is requesting to server...\n");
+    sleep(2);
+    connect(client_sockfd, (struct sockaddr *)&client_address, client_len);
+    
+    while(1)
+    {
+        printf("Enter the number: ");
+        fgets(out_buf, sizeof(out_buf), stdin);
+        out_buf[strcspn(out_buf, "\n")] = '\0'; // Remove the newline character
+
+        send(client_sockfd, out_buf, (strlen(out_buf) + 1), 0);
+        recv(client_sockfd, in_buf, sizeof(in_buf), 0);
+        printf("\n\nSum of primes received from server: '%s'\n", in_buf);
+    }
+    
+    close(client_sockfd);
+    return 0;
+}
+
+
+
+
+**Server Program:**
+
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+int is_prime(int num) {
+    if (num <= 1) return 0;
+    for (int i = 2; i * i <= num; i++) {
+        if (num % i == 0) return 0;
+    }
+    return 1;
+}
+
+int sum_of_primes(int num) {
+    int sum = 0;
+    for (int i = 2; i <= num; i++) {
+        if (is_prime(i)) {
+            sum += i;
+        }
+    }
+    return sum;
+}
+
+int main(void)
+{
+    int server_sockfd, client_sockfd;
+    int server_len, client_len;
+    char in_buf[100], out_buf[100];
+    struct sockaddr_un server_address, client_address;
+
+    unlink("server_socket");
+    server_sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    server_address.sun_family = AF_UNIX;
+    strcpy(server_address.sun_path, "server_socket");
+    server_len = sizeof(server_address);
+
+    printf("\n\nServer is waiting for client response\n");
+    bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
+    listen(server_sockfd, 5);
+    client_len = sizeof(client_address);
+    client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
+    printf("\n\nClient request is accepted by the server\n");
+
+    while(1)
+    {
+        recv(client_sockfd, in_buf, sizeof(in_buf), 0);
+        printf("Number received from client: '%s'\n", in_buf);
+
+        int num = atoi(in_buf);
+        int result = sum_of_primes(num);
+        snprintf(out_buf, sizeof(out_buf), "%d", result);
+        
+        printf("Sum of primes calculated: %s\n", out_buf);
+        send(client_sockfd, out_buf, (strlen(out_buf) + 1), 0);
+    }
+    
+    close(server_sockfd);
+    close(client_sockfd);
+    return 0;
+}

@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+int main() {
+    int server_socket, client_socket;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_len;
+    int A, B, result;
+
+    // Create socket
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket < 0) {
+        perror("Error opening socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialize server address struct
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(12345);
+
+    // Bind socket
+    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Error on binding");
+        exit(EXIT_FAILURE);
+    }
+
+    // Listen for connections
+    listen(server_socket, 1);
+
+    // Accept connection
+    client_len = sizeof(client_addr);
+    client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_len);
+    if (client_socket < 0) {
+        perror("Error on accept");
+        exit(EXIT_FAILURE);
+    }
+
+    // Receive numbers from client
+    recv(client_socket, &A, sizeof(A), 0);
+    recv(client_socket, &B, sizeof(B), 0);
+
+    // Calculate A^B
+    result = 1;
+    for (int i = 0; i < B; i++) {
+        result *= A;
+    }
+
+    // Send result back to client
+    send(client_socket, &result, sizeof(result), 0);
+
+    // Close sockets
+    close(client_socket);
+    close(server_socket);
+
+    return 0;
+}

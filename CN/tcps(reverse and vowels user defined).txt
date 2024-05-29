@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+int count_vowels(char *str) {
+    int count = 0;
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == 'a' || str[i] == 'e' || str[i] == 'i' || str[i] == 'o' || str[i] == 'u' ||
+            str[i] == 'A' || str[i] == 'E' || str[i] == 'I' || str[i] == 'O' || str[i] == 'U') {
+            count++;
+        }
+    }
+    return count;
+}
+
+int main (int ac, char **av) {
+    int i, l, n, sid, cid, vowels;
+    struct sockaddr_in sad, cad;
+    char sip_addr[32], msg[32];
+
+    if (ac == 1)
+        strcpy (sip_addr, "127.0.0.1");
+    else
+        strcpy (sip_addr, av[1]);
+    
+    sid = socket (AF_INET, SOCK_STREAM, 0);
+    sad.sin_family = AF_INET;
+    sad.sin_addr.s_addr = inet_addr (sip_addr);
+    sad.sin_port = htons(1234);
+    
+    bind (sid, (struct sockaddr *) &sad, sizeof (sad));
+    listen (sid, 1);
+    l = sizeof (cad);
+    cid = accept (sid, (struct sockaddr *) &cad, &l);
+    
+    while (1) {
+        // Receive message from client
+        n = read (cid, (void *) msg, sizeof (msg));
+        msg[n] = '\0';
+        
+        if (!strcmp (msg, "EXIT"))
+            break;
+        
+        // Count vowels in received message
+        vowels = count_vowels(msg);
+        printf("Number of vowels in client's message: %d\n", vowels);
+
+        // Prompt user to enter message
+        printf("Enter message to send: ");
+        fgets(msg, sizeof(msg), stdin);
+        msg[strcspn(msg, "\n")] = '\0'; // Remove newline character
+        
+        // Send message to client
+        write (cid, (void *) msg, strlen (msg));
+
+        // Send number of vowels to client
+        vowels = count_vowels(msg);
+        write(cid, &vowels, sizeof(vowels));
+    }
+    
+    close (sid);
+    return 0;
+}

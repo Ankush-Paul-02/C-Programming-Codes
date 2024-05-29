@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define BUFFER_SIZE 256
+
+int main(int argc, char **argv) {
+    struct sockaddr_in server_addr;
+    int sockfd, n;
+    char server_ip[32], message[BUFFER_SIZE];
+
+    if (argc == 1)
+        strcpy(server_ip, "127.0.0.1");
+    else
+        strcpy(server_ip, argv[1]);
+
+    // Create socket
+    if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("Error creating socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Initialize server address struct
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(1234);
+    if (inet_pton(AF_INET, server_ip, &server_addr.sin_addr) <= 0) {
+        perror("Invalid address");
+        exit(EXIT_FAILURE);
+    }
+
+    // Connect to server
+    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Connection failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Communication loop
+    while (1) {
+        printf("Enter message to send: ");
+        if (fgets(message, BUFFER_SIZE, stdin) == NULL) {
+            perror("Error reading input");
+            break;
+        }
+
+        // Remove newline character from input
+        message[strcspn(message, "\n")] = 0;
+
+        // Send message to server
+        if (send(sockfd, message, strlen(message), 0) < 0) {
+            perror("Send failed");
+            break;
+        }
+
+        if (strcmp(message, "EXIT") == 0)
+            break;
+
+        // Receive response from server
+        if ((n = recv(sockfd, message, BUFFER_SIZE - 1, 0)) < 0) {
+            perror("Receive failed");
+            break;
+        }
+
+        message[n] = '\0';
+        printf("Returned message: %s\n", message);
+    }
+
+    // Close socket
+    close(sockfd);
+    return 0;
+}
